@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>База клиентов</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; color: #1a1a1a; background: #f0f2f5; }
+
+.nav { background: #3d3152; color: white; padding: 0 20px; display: flex; align-items: center; }
+.nav-title { font-size: 15px; font-weight: 600; padding: 14px 0; margin-right: 24px; }
+.nav-btn { background: none; border: none; border-bottom: 2px solid transparent; color: rgba(255,255,255,0.6); padding: 14px 14px; cursor: pointer; font-size: 13px; transition: color 0.15s, border-color 0.15s; }
+.nav-btn:hover { color: white; }
+.nav-btn.active { color: white; border-bottom-color: #a78bce; }
+.nav-right { margin-left: auto; display: flex; gap: 6px; }
+.nav-action { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+.nav-action:hover { background: rgba(255,255,255,0.2); }
+
+.page { display: none; padding: 24px; max-width: 900px; margin: 0 auto; }
+.page.active { display: block; }
+
+.card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 12px; }
+
+h2 { font-size: 19px; font-weight: 600; margin-bottom: 18px; }
+h3 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.4px; }
+
+.form-group { margin-bottom: 14px; }
+label { display: block; font-size: 12px; font-weight: 500; color: #555; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+input[type="text"], textarea { width: 100%; padding: 8px 10px; border: 1px solid #d8dde3; border-radius: 5px; font-size: 14px; font-family: inherit; transition: border-color 0.15s; }
+input[type="text"]:focus, textarea:focus { outline: none; border-color: #8b6bb1; box-shadow: 0 0 0 2px rgba(139,107,177,0.12); }
+textarea { resize: vertical; }
+
+.btn { padding: 8px 16px; border-radius: 5px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.15s; }
+.btn-primary { background: #6d4c9e; color: white; }
+.btn-primary:hover { background: #5a3d85; }
+.btn-secondary { background: #eef0f3; color: #333; border: 1px solid #d8dde3; }
+.btn-secondary:hover { background: #e2e5ea; }
+.btn-danger { background: #e74c3c; color: white; }
+.btn-danger:hover { background: #c0392b; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+.tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; margin: 2px 2px 2px 0; }
+.tag-purple { background: #f0eaf9; color: #6d4c9e; }
+.tag-gray { background: #f0f2f5; color: #555; }
+.tag-green { background: #eafaf1; color: #1e8449; }
+.tag-blue { background: #eaf4fb; color: #1a5276; }
+.tag-rose { background: #fdf0f0; color: #922b21; }
+.tag-amber { background: #fef9e7; color: #7d6608; }
+
+/* чипы для интервенций */
+.chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; padding: 8px; border: 1px solid #d8dde3; border-radius: 5px; cursor: text; }
+.chips-wrap:focus-within { border-color: #8b6bb1; box-shadow: 0 0 0 2px rgba(139,107,177,0.12); }
+.chip { display: inline-flex; align-items: center; gap: 4px; background: #f0eaf9; color: #5a3d85; border-radius: 12px; padding: 3px 10px; font-size: 12px; font-weight: 500; }
+.chip-x { cursor: pointer; color: #9e7bc4; font-size: 14px; line-height: 1; }
+.chip-x:hover { color: #5a3d85; }
+.chips-input { border: none; outline: none; font-size: 13px; font-family: inherit; min-width: 120px; flex: 1; padding: 2px 0; background: transparent; }
+
+/* теги наблюдений */
+.obs-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.obs-tag { padding: 4px 12px; border-radius: 12px; font-size: 12px; cursor: pointer; border: 1px solid transparent; transition: all 0.12s; user-select: none; }
+.obs-tag.selected { font-weight: 600; }
+.obs-body { background: #fef9e7; color: #7d6608; border-color: #f5e47a; }
+.obs-body.selected { background: #f5e47a; color: #5a4a00; }
+.obs-emotion { background: #fdf0f0; color: #922b21; border-color: #f5b7b1; }
+.obs-emotion.selected { background: #f5b7b1; color: #6e1a13; }
+.obs-meta { background: #eaf4fb; color: #1a5276; border-color: #aed6f1; }
+.obs-meta.selected { background: #aed6f1; color: #0e3460; }
+.obs-defense { background: #f0eaf9; color: #6d4c9e; border-color: #c39bd3; }
+.obs-defense.selected { background: #c39bd3; color: #3d1a6e; }
+
+.obs-group { margin-bottom: 10px; }
+.obs-group-label { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+
+/* список клиентов */
+.client-row { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; }
+.client-row:last-child { border-bottom: none; }
+.client-row:hover { background: #fbfcfd; }
+.client-name { font-weight: 500; cursor: pointer; color: #2c3e50; }
+.client-name:hover { color: #6d4c9e; }
+.client-meta { font-size: 12px; color: #888; margin-top: 3px; line-height: 1.5; }
+
+.search-bar { width: 100%; padding: 10px 14px; border: 1px solid #d8dde3; border-radius: 6px; font-size: 14px; margin-bottom: 16px; }
+.search-bar:focus { outline: none; border-color: #8b6bb1; }
+
+.btn-row { display: flex; gap: 8px; margin-top: 18px; align-items: center; }
+
+.empty { text-align: center; padding: 48px 24px; color: #aaa; }
+.empty-title { font-size: 15px; margin-bottom: 8px; color: #666; }
+
+.alert { padding: 10px 14px; border-radius: 5px; margin-bottom: 14px; font-size: 13px; }
+.alert-info { background: #f0eaf9; color: #4a2d7a; border: 1px solid #d4b8f0; }
+.alert-success { background: #eafaf1; color: #1e5631; border: 1px solid #c6efdb; }
+
+.divider { border: none; border-top: 1px solid #f0f2f5; margin: 16px 0; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-header h2 { margin-bottom: 0; }
+
+/* результат подбора */
+.match-score-badge { background: #6d4c9e; color: white; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; margin-left: 10px; flex-shrink: 0; }
+.match-header { display: flex; justify-content: space-between; align-items: flex-start; }
+
+.interv-item { display: flex; align-items: center; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #f5f5f5; gap: 10px; }
+.interv-item:last-child { border-bottom: none; }
+.interv-bar-wrap { width: 70px; }
+.interv-bar { height: 4px; background: #8b6bb1; border-radius: 2px; }
+.interv-freq { font-size: 11px; color: #999; white-space: nowrap; }
+
+.metric-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.metric-row input { flex: 1; }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-title">База клиентов</div>
+  <button class="nav-btn active" onclick="showPage('list')">Все клиенты</button>
+  <button class="nav-btn" onclick="showPage('add')">Добавить клиента</button>
+  <button class="nav-btn" onclick="showPage('match')">Новый клиент</button>
+  <button class="nav-btn" onclick="showPage('settings')">Настройки</button>
+  <div class="nav-right">
+    <button class="nav-action" onclick="exportDB()">Экспорт</button>
+    <button class="nav-action" onclick="document.getElementById('importFile').click()">Импорт</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDB(event)">
+  </div>
+</div>
+
+<!-- СПИСОК -->
+<div id="page-list" class="page active">
+  <div class="page-header">
+    <h2>Клиенты <span id="caseCount" style="color:#aaa;font-weight:400;font-size:15px"></span></h2>
+    <button class="btn btn-primary" onclick="showPage('add')">+ Добавить</button>
+  </div>
+  <input type="text" class="search-bar" id="searchInput" placeholder="Поиск по запросу, типу, тегам..." oninput="renderList(this.value)">
+  <div class="card" style="padding:0;overflow:hidden">
+    <div id="clientList"></div>
+  </div>
+</div>
+
+<!-- ДОБАВИТЬ / РЕДАКТИРОВАТЬ -->
+<div id="page-add" class="page">
+  <h2 id="addTitle">Добавить клиента</h2>
+  <div class="card">
+    <div class="form-group">
+      <label>Код или имя клиента</label>
+      <input type="text" id="caseTitle" placeholder="например: Клиент А, Марина 35л">
+    </div>
+    <div class="form-group">
+      <label>Запрос</label>
+      <textarea id="caseRequest" style="min-height:64px" placeholder="С чем пришёл клиент — коротко, своими словами"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Заметки (ход работы, наблюдения, ключевые моменты)</label>
+      <textarea id="caseNotes" style="min-height:96px" placeholder="Что происходило в работе, что зацепило, что сработало..."></textarea>
+    </div>
+
+    <hr class="divider">
+    <h3>Интервенции и техники</h3>
+    <p style="font-size:12px;color:#888;margin-bottom:8px">Что применялось с этим клиентом — напишите и нажмите Enter</p>
+    <div class="chips-wrap" id="chipsWrap" onclick="document.getElementById('chipInput').focus()">
+      <input type="text" class="chips-input" id="chipInput" placeholder="Напишите технику и нажмите Enter..." onkeydown="chipKeydown(event)">
+    </div>
+
+    <hr class="divider">
+    <h3>Наблюдения</h3>
+    <div id="obsTagsEdit"></div>
+
+    <hr class="divider">
+    <h3>Метрики типирования</h3>
+    <div id="addMetricsForm"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveCase()">Сохранить</button>
+      <button class="btn btn-secondary" onclick="showPage('list')">Отмена</button>
+      <span style="flex:1"></span>
+      <button class="btn btn-danger" id="deleteCaseBtn" style="display:none" onclick="deleteCase()">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ПРОСМОТР -->
+<div id="page-view" class="page">
+  <div class="page-header">
+    <h2 id="viewTitle"></h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" onclick="editCurrentCase()">Редактировать</button>
+      <button class="btn btn-secondary" onclick="showPage('list')">← Назад</button>
+    </div>
+  </div>
+  <div class="card">
+    <div id="viewRequest" style="font-size:15px;font-style:italic;color:#444;margin-bottom:10px;line-height:1.5"></div>
+    <div id="viewObs" style="margin-bottom:10px"></div>
+    <div id="viewMetrics" style="margin-bottom:4px"></div>
+    <hr class="divider">
+    <h3>Заметки</h3>
+    <div id="viewNotes" style="color:#444;font-size:13px;line-height:1.6;white-space:pre-wrap"></div>
+    <hr class="divider">
+    <h3>Интервенции и техники</h3>
+    <div id="viewInterventions"></div>
+  </div>
+</div>
+
+<!-- НОВЫЙ КЛИЕНТ / ПОДБОР -->
+<div id="page-match" class="page">
+  <h2>Новый клиент — подбор интервенций</h2>
+  <div class="card">
+    <div class="alert alert-info">Опишите нового клиента — система найдёт похожие случаи и покажет, что работало с ними</div>
+    <div class="form-group">
+      <label>Запрос / с чем пришёл</label>
+      <textarea id="matchRequest" style="min-height:56px" placeholder="Коротко — с чем клиент, что его беспокоит"></textarea>
+    </div>
+    <hr class="divider">
+    <h3>Наблюдения</h3>
+    <div id="matchObsTags"></div>
+    <hr class="divider">
+    <h3>Метрики</h3>
+    <div id="matchMetricsForm"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="runMatch()">Найти похожих</button>
+      <button class="btn btn-secondary" onclick="clearMatch()">Очистить</button>
+    </div>
+  </div>
+  <div id="matchResults"></div>
+</div>
+
+<!-- НАСТРОЙКИ -->
+<div id="page-settings" class="page">
+  <h2>Настройки</h2>
+  <div class="card">
+    <h3>Поля метрик</h3>
+    <p style="font-size:12px;color:#888;margin-bottom:14px">По этим полям идёт поиск похожих клиентов</p>
+    <div id="settingsMetricsList"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="addMetricField()">+ Поле</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Сохранить</button>
+    </div>
+    <div id="settingsSaved" style="display:none;margin-top:10px" class="alert alert-success">Сохранено</div>
+  </div>
+  <div class="card">
+    <h3>Теги наблюдений</h3>
+    <p style="font-size:12px;color:#888;margin-bottom:14px">Редактировать предустановленные теги по категориям</p>
+    <div id="settingsObsTags"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveObsSettings()">Сохранить теги</button>
+    </div>
+    <div id="obsSettingsSaved" style="display:none;margin-top:10px" class="alert alert-success">Сохранено</div>
+  </div>
+  <div class="card">
+    <h3>Сброс данных</h3>
+    <p style="font-size:12px;color:#888;margin-bottom:12px">Удалить всех клиентов из базы (настройки останутся)</p>
+    <button class="btn btn-danger" onclick="resetCases()">Удалить всех клиентов</button>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────────────────────────────
+// ДАННЫЕ
+// ──────────────────────────────────────────────────────────────────────────────
+
+const OBS_CATEGORIES = [
+  {
+    key: 'body', label: 'Тело', cls: 'obs-body',
+    tags: ['Зажимы', 'Хроническая боль', 'Психосоматика', 'Слабый контакт с телом', 'Высокий телесный контакт', 'Заморозка', 'Тремор', 'Гипервентиляция']
+  },
+  {
+    key: 'emotion', label: 'Эмоции', cls: 'obs-emotion',
+    tags: ['Тревога', 'Депрессия', 'Злость', 'Стыд', 'Вина', 'Страх близости', 'Эмоциональная уплощённость', 'Лабильность', 'Подавленный аффект']
+  },
+  {
+    key: 'meta', label: 'Метафоры и образы', cls: 'obs-meta',
+    tags: ['Стена', 'Ловушка', 'Пустота', 'Груз', 'Маска', 'Одиночество', 'Борьба', 'Потеря себя']
+  },
+  {
+    key: 'defense', label: 'Защиты', cls: 'obs-defense',
+    tags: ['Рационализация', 'Отрицание', 'Проекция', 'Изоляция аффекта', 'Интеллектуализация', 'Расщепление', 'Идеализация', 'Диссоциация', 'Регрессия']
+  }
+];
+
+let db = {
+  cases: [],
+  settings: {
+    metrics: [
+      { id: 'm1', label: 'Тип личности / структура' },
+      { id: 'm2', label: 'Запрос (категория)' },
+      { id: 'm3', label: 'Длительность работы' },
+      { id: 'm4', label: 'Результат' },
+    ],
+    obsCategories: OBS_CATEGORIES.map(c => ({ ...c, tags: [...c.tags] }))
+  }
+};
+
+let editingId = null;
+let currentChips = [];
+let selectedObsTags = {};  // { categoryKey: [tag, tag] }
+let matchObsSelected = {};
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem('psych_cases_v1');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (saved.cases) db.cases = saved.cases;
+      if (saved.settings) {
+        db.settings = saved.settings;
+        if (!db.settings.obsCategories) db.settings.obsCategories = OBS_CATEGORIES.map(c => ({ ...c, tags: [...c.tags] }));
+      }
+    }
+  } catch(e) {}
+}
+
+function saveDB() {
+  localStorage.setItem('psych_cases_v1', JSON.stringify(db));
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// НАВИГАЦИЯ
+// ──────────────────────────────────────────────────────────────────────────────
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const pages = ['list', 'add', 'match', 'settings'];
+  const idx = pages.indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  if (name === 'list') renderList(document.getElementById('searchInput').value || '');
+  if (name === 'add') initAddForm(null);
+  if (name === 'match') initMatchPage();
+  if (name === 'settings') renderSettings();
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// СПИСОК КЛИЕНТОВ
+// ──────────────────────────────────────────────────────────────────────────────
+
+function renderList(query) {
+  const q = (query || '').toLowerCase().trim();
+  const filtered = q ? db.cases.filter(c => {
+    if ((c.title || '').toLowerCase().includes(q)) return true;
+    if ((c.request || '').toLowerCase().includes(q)) return true;
+    if ((c.notes || '').toLowerCase().includes(q)) return true;
+    if (Object.values(c.metrics || {}).join(' ').toLowerCase().includes(q)) return true;
+    if ((c.interventions || []).join(' ').toLowerCase().includes(q)) return true;
+    const obsTags = Object.values(c.obs || {}).flat().join(' ').toLowerCase();
+    if (obsTags.includes(q)) return true;
+    return false;
+  }) : db.cases;
+
+  const total = db.cases.length;
+  document.getElementById('caseCount').textContent = total > 0 ? `(${total})` : '';
+
+  const el = document.getElementById('clientList');
+
+  if (total === 0) {
+    el.innerHTML = `<div class="empty"><div style="font-size:36px;margin-bottom:12px">🗂</div><div class="empty-title">База пустая</div><div style="font-size:13px;color:#aaa;margin-bottom:16px">Добавьте первого клиента или загрузите базу через «Импорт»</div><button class="btn btn-primary" onclick="showPage('add')">+ Добавить клиента</button></div>`;
+    return;
+  }
+  if (filtered.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-title">Ничего не найдено</div></div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(c => {
+    const metricTags = db.settings.metrics
+      .filter(m => c.metrics && c.metrics[m.id])
+      .slice(0, 3)
+      .map(m => `<span class="tag tag-gray">${esc(m.label)}: ${esc(c.metrics[m.id])}</span>`)
+      .join('');
+    const obsAll = Object.values(c.obs || {}).flat().slice(0, 3).map(t => `<span class="tag tag-purple">${esc(t)}</span>`).join('');
+    const intervCount = (c.interventions || []).length;
+    return `<div class="client-row">
+      <div>
+        <div class="client-name" onclick="viewCase('${c.id}')">${esc(c.title) || 'Без имени'}</div>
+        <div class="client-meta">
+          ${c.request ? `<span style="color:#555">${esc(c.request.slice(0, 80))}${c.request.length > 80 ? '…' : ''}</span><br>` : ''}
+          ${metricTags} ${obsAll} ${intervCount > 0 ? `<span class="tag tag-green">${intervCount} техник${pluralN(intervCount)}</span>` : ''}
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" style="flex-shrink:0" onclick="viewCase('${c.id}')">Открыть</button>
+    </div>`;
+  }).join('');
+}
+
+function pluralN(n) {
+  if (n % 10 === 1 && n % 100 !== 11) return 'а';
+  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) 'и';
+  return '';
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ПРОСМОТР
+// ──────────────────────────────────────────────────────────────────────────────
+
+function viewCase(id) {
+  const c = db.cases.find(x => x.id === id);
+  if (!c) return;
+  editingId = id;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-view').classList.add('active');
+
+  document.getElementById('viewTitle').textContent = c.title || 'Без имени';
+  document.getElementById('viewRequest').textContent = c.request ? '«' + c.request + '»' : '';
+  document.getElementById('viewNotes').textContent = c.notes || '';
+
+  const obsTags = Object.entries(c.obs || {}).flatMap(([catKey, tags]) => {
+    const cat = db.settings.obsCategories.find(x => x.key === catKey);
+    return tags.map(t => `<span class="obs-tag ${cat ? cat.cls : ''}">${esc(t)}</span>`);
+  }).join('');
+  document.getElementById('viewObs').innerHTML = obsTags || '';
+
+  const metricTags = db.settings.metrics
+    .filter(m => c.metrics && c.metrics[m.id])
+    .map(m => `<span class="tag tag-gray">${esc(m.label)}: ${esc(c.metrics[m.id])}</span>`)
+    .join('');
+  document.getElementById('viewMetrics').innerHTML = metricTags || '<span style="color:#aaa;font-size:12px">Метрики не заполнены</span>';
+
+  const interv = c.interventions || [];
+  document.getElementById('viewInterventions').innerHTML = interv.length === 0
+    ? '<span style="color:#aaa;font-size:12px">Не указаны</span>'
+    : interv.map(i => `<span class="chip" style="margin:3px">${esc(i)}</span>`).join('');
+}
+
+function editCurrentCase() {
+  initAddForm(editingId);
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-add').classList.add('active');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ДОБАВИТЬ / РЕДАКТИРОВАТЬ
+// ──────────────────────────────────────────────────────────────────────────────
+
+function initAddForm(id) {
+  editingId = id;
+  currentChips = [];
+  selectedObsTags = {};
+  const c = id ? db.cases.find(x => x.id === id) : null;
+
+  document.getElementById('addTitle').textContent = c ? 'Редактировать клиента' : 'Добавить клиента';
+  document.getElementById('caseTitle').value = c ? (c.title || '') : '';
+  document.getElementById('caseRequest').value = c ? (c.request || '') : '';
+  document.getElementById('caseNotes').value = c ? (c.notes || '') : '';
+  document.getElementById('deleteCaseBtn').style.display = c ? '' : 'none';
+
+  if (c && c.interventions) currentChips = [...c.interventions];
+  if (c && c.obs) selectedObsTags = JSON.parse(JSON.stringify(c.obs));
+
+  renderChips();
+  renderObsTagsEdit();
+
+  document.getElementById('addMetricsForm').innerHTML = db.settings.metrics.map(m => `
+    <div class="form-group">
+      <label>${esc(m.label)}</label>
+      <input type="text" id="addm_${m.id}" value="${c && c.metrics && c.metrics[m.id] ? esc(c.metrics[m.id]) : ''}">
+    </div>
+  `).join('');
+}
+
+// чипы интервенций
+function renderChips() {
+  const wrap = document.getElementById('chipsWrap');
+  const input = document.getElementById('chipInput');
+  wrap.innerHTML = '';
+  currentChips.forEach((chip, i) => {
+    const span = document.createElement('span');
+    span.className = 'chip';
+    span.innerHTML = `${esc(chip)} <span class="chip-x" onclick="removeChip(${i})">×</span>`;
+    wrap.appendChild(span);
+  });
+  wrap.appendChild(input);
+}
+
+function chipKeydown(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (val && !currentChips.includes(val)) {
+      currentChips.push(val);
+      renderChips();
+    }
+    e.target.value = '';
+  } else if (e.key === 'Backspace' && e.target.value === '' && currentChips.length > 0) {
+    currentChips.pop();
+    renderChips();
+  }
+}
+
+function removeChip(i) {
+  currentChips.splice(i, 1);
+  renderChips();
+}
+
+// теги наблюдений
+function renderObsTagsEdit() {
+  const container = document.getElementById('obsTagsEdit');
+  container.innerHTML = db.settings.obsCategories.map(cat => `
+    <div class="obs-group">
+      <div class="obs-group-label">${esc(cat.label)}</div>
+      <div class="obs-tags">${cat.tags.map(t => {
+        const sel = selectedObsTags[cat.key] && selectedObsTags[cat.key].includes(t);
+        return `<span class="obs-tag ${cat.cls}${sel ? ' selected' : ''}" onclick="toggleObsTag('${cat.key}','${t.replace(/'/g,"\\'")}',this)">${esc(t)}</span>`;
+      }).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function toggleObsTag(catKey, tag, el) {
+  if (!selectedObsTags[catKey]) selectedObsTags[catKey] = [];
+  const idx = selectedObsTags[catKey].indexOf(tag);
+  if (idx >= 0) {
+    selectedObsTags[catKey].splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    selectedObsTags[catKey].push(tag);
+    el.classList.add('selected');
+  }
+}
+
+function saveCase() {
+  const title = document.getElementById('caseTitle').value.trim();
+  if (!title) { alert('Введите имя или код клиента'); return; }
+
+  const metrics = {};
+  db.settings.metrics.forEach(m => {
+    const el = document.getElementById('addm_' + m.id);
+    if (el) metrics[m.id] = el.value.trim();
+  });
+
+  // финальный чип из незавершённого ввода
+  const chipInput = document.getElementById('chipInput');
+  if (chipInput && chipInput.value.trim()) {
+    const v = chipInput.value.trim();
+    if (!currentChips.includes(v)) currentChips.push(v);
+    chipInput.value = '';
+  }
+
+  const data = {
+    title,
+    request: document.getElementById('caseRequest').value.trim(),
+    notes: document.getElementById('caseNotes').value.trim(),
+    interventions: [...currentChips],
+    obs: JSON.parse(JSON.stringify(selectedObsTags)),
+    metrics
+  };
+
+  if (editingId) {
+    const c = db.cases.find(x => x.id === editingId);
+    if (c) Object.assign(c, data);
+  } else {
+    db.cases.push({ id: 'c' + Date.now() + Math.random().toString(36).slice(2, 5), created: new Date().toISOString().split('T')[0], ...data });
+  }
+
+  saveDB();
+  showPage('list');
+}
+
+function deleteCase() {
+  if (!editingId) return;
+  if (!confirm('Удалить этого клиента из базы?')) return;
+  db.cases = db.cases.filter(c => c.id !== editingId);
+  saveDB();
+  editingId = null;
+  showPage('list');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ПОДБОР ИНТЕРВЕНЦИЙ
+// ──────────────────────────────────────────────────────────────────────────────
+
+function initMatchPage() {
+  matchObsSelected = {};
+  document.getElementById('matchRequest').value = '';
+  renderMatchObsTags();
+  document.getElementById('matchMetricsForm').innerHTML = db.settings.metrics.map(m => `
+    <div class="form-group">
+      <label>${esc(m.label)}</label>
+      <input type="text" id="matchm_${m.id}">
+    </div>
+  `).join('');
+  document.getElementById('matchResults').innerHTML = '';
+}
+
+function renderMatchObsTags() {
+  document.getElementById('matchObsTags').innerHTML = db.settings.obsCategories.map(cat => `
+    <div class="obs-group">
+      <div class="obs-group-label">${esc(cat.label)}</div>
+      <div class="obs-tags">${cat.tags.map(t => {
+        const sel = matchObsSelected[cat.key] && matchObsSelected[cat.key].includes(t);
+        return `<span class="obs-tag ${cat.cls}${sel ? ' selected' : ''}" onclick="toggleMatchObs('${cat.key}','${t.replace(/'/g,"\\'")}',this)">${esc(t)}</span>`;
+      }).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function toggleMatchObs(catKey, tag, el) {
+  if (!matchObsSelected[catKey]) matchObsSelected[catKey] = [];
+  const idx = matchObsSelected[catKey].indexOf(tag);
+  if (idx >= 0) { matchObsSelected[catKey].splice(idx, 1); el.classList.remove('selected'); }
+  else { matchObsSelected[catKey].push(tag); el.classList.add('selected'); }
+}
+
+function clearMatch() {
+  initMatchPage();
+}
+
+function runMatch() {
+  if (db.cases.length === 0) {
+    document.getElementById('matchResults').innerHTML = '<div class="alert alert-info" style="margin-top:12px">База пустая — сначала добавьте клиентов.</div>';
+    return;
+  }
+
+  const queryMetrics = {};
+  let hasAny = false;
+  db.settings.metrics.forEach(m => {
+    const el = document.getElementById('matchm_' + m.id);
+    if (el && el.value.trim()) { queryMetrics[m.id] = el.value.trim().toLowerCase(); hasAny = true; }
+  });
+
+  const queryRequest = (document.getElementById('matchRequest').value || '').trim().toLowerCase();
+  const queryObsTags = Object.values(matchObsSelected).flat();
+
+  if (!hasAny && !queryRequest && queryObsTags.length === 0) {
+    alert('Заполните хотя бы одно поле');
+    return;
+  }
+
+  const scored = db.cases.map(c => {
+    let score = 0;
+    // метрики
+    Object.entries(queryMetrics).forEach(([mid, qval]) => {
+      const cval = ((c.metrics && c.metrics[mid]) || '').toLowerCase();
+      if (!cval) return;
+      if (cval === qval) score += 2;
+      else if (cval.includes(qval) || qval.includes(cval)) score += 1.5;
+      else if (qval.split(/\s+/).filter(w => w.length > 2).some(w => cval.includes(w))) score += 0.7;
+    });
+    // запрос
+    if (queryRequest) {
+      const creq = ((c.request || '') + ' ' + (c.notes || '')).toLowerCase();
+      const words = queryRequest.split(/\s+/).filter(w => w.length > 3);
+      const matched = words.filter(w => creq.includes(w)).length;
+      score += matched * 0.5;
+    }
+    // теги наблюдений
+    const cObsTags = Object.values(c.obs || {}).flat();
+    const obsMatched = queryObsTags.filter(t => cObsTags.includes(t)).length;
+    score += obsMatched * 1.2;
+
+    return { c, score };
+  }).filter(x => x.score > 0).sort((a, b) => b.score - a.score).slice(0, 5);
+
+  const container = document.getElementById('matchResults');
+
+  if (scored.length === 0) {
+    container.innerHTML = '<div class="card" style="margin-top:12px;color:#888;text-align:center;padding:32px">Похожих клиентов не найдено.<br><span style="font-size:12px">Попробуйте убрать часть критериев.</span></div>';
+    return;
+  }
+
+  // частота интервенций
+  const intervFreq = {};
+  scored.forEach(({ c }) => (c.interventions || []).forEach(i => { intervFreq[i] = (intervFreq[i] || 0) + 1; }));
+  const sortedInterv = Object.entries(intervFreq).sort((a, b) => b[1] - a[1]);
+  const total = scored.length;
+
+  // частые теги
+  const tagFreq = {};
+  scored.forEach(({ c }) => Object.values(c.obs || {}).flat().forEach(t => { tagFreq[t] = (tagFreq[t] || 0) + 1; }));
+  const topTags = Object.entries(tagFreq).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+  let html = '<div style="margin-top:16px">';
+
+  if (sortedInterv.length > 0) {
+    html += `<div class="card" style="border:2px solid #6d4c9e;margin-bottom:16px">
+      <h3 style="color:#6d4c9e;margin-bottom:6px">Что работало с похожими клиентами</h3>
+      <p style="font-size:12px;color:#888;margin-bottom:12px">На основе ${total} похожих случаев</p>
+      ${sortedInterv.map(([interv, freq]) => {
+        const pct = Math.round(freq / total * 100);
+        return `<div class="interv-item">
+          <span style="flex:1">${esc(interv)}</span>
+          <div class="interv-bar-wrap"><div class="interv-bar" style="width:${pct}%"></div></div>
+          <span class="interv-freq">${freq} из ${total}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  if (topTags.length > 0) {
+    html += `<div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:8px">Частые наблюдения у похожих клиентов</h3>
+      <div>${topTags.map(([tag, freq]) => {
+        const cat = db.settings.obsCategories.find(c => c.tags.includes(tag));
+        return `<span class="obs-tag ${cat ? cat.cls : ''}" style="margin:3px">${esc(tag)} <span style="opacity:0.6;font-size:10px">${freq}×</span></span>`;
+      }).join('')}</div>
+    </div>`;
+  }
+
+  html += '<h3 style="margin-bottom:10px">Похожие клиенты</h3>';
+  scored.forEach(({ c, score }) => {
+    const maxScore = Math.max(Object.keys(queryMetrics).length * 2 + queryObsTags.length * 1.2, 1);
+    const pct = Math.min(100, Math.round(score / maxScore * 100));
+    const metricTags = db.settings.metrics.filter(m => c.metrics && c.metrics[m.id]).map(m => `<span class="tag tag-gray">${esc(m.label)}: ${esc(c.metrics[m.id])}</span>`).join('');
+    const intervList = (c.interventions || []).slice(0, 5).map(i => `<span class="chip" style="margin:2px">${esc(i)}</span>`).join('');
+    html += `<div class="card" style="border:1px solid #d4b8f0;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:500">${esc(c.title)}</div>
+          ${c.request ? `<div style="font-size:12px;color:#555;margin-top:2px;font-style:italic">${esc(c.request.slice(0,80))}${c.request.length > 80 ? '…' : ''}</div>` : ''}
+        </div>
+        <span class="match-score-badge">${pct}%</span>
+      </div>
+      ${metricTags ? `<div style="margin-top:6px">${metricTags}</div>` : ''}
+      ${intervList ? `<div style="margin-top:8px">${intervList}</div>` : ''}
+    </div>`;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// НАСТРОЙКИ
+// ──────────────────────────────────────────────────────────────────────────────
+
+function renderSettings() {
+  document.getElementById('settingsMetricsList').innerHTML = db.settings.metrics.map((m, i) => `
+    <div class="metric-row">
+      <input type="text" value="${esc(m.label)}" oninput="db.settings.metrics[${i}].label = this.value" placeholder="Название поля">
+      <button class="btn btn-secondary btn-sm" onclick="removeMetric(${i})">Удалить</button>
+    </div>
+  `).join('');
+
+  // теги наблюдений
+  document.getElementById('settingsObsTags').innerHTML = db.settings.obsCategories.map((cat, ci) => `
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:6px">${esc(cat.label)}</div>
+      <div id="obsTagList_${ci}">${cat.tags.map((t, ti) => `
+        <div style="display:flex;gap:6px;margin-bottom:4px">
+          <input type="text" value="${esc(t)}" oninput="db.settings.obsCategories[${ci}].tags[${ti}] = this.value" style="flex:1">
+          <button class="btn btn-secondary btn-sm" onclick="removeObsTag(${ci},${ti})">×</button>
+        </div>
+      `).join('')}</div>
+      <button class="btn btn-secondary btn-sm" onclick="addObsTag(${ci})" style="margin-top:4px">+ Тег</button>
+    </div>
+  `).join('');
+}
+
+function addMetricField() {
+  db.settings.metrics.push({ id: 'm' + Date.now(), label: '' });
+  renderSettings();
+  const inputs = document.querySelectorAll('.metric-row input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removeMetric(idx) {
+  if (!confirm('Удалить это поле?')) return;
+  db.settings.metrics.splice(idx, 1);
+  renderSettings();
+}
+
+function addObsTag(ci) {
+  db.settings.obsCategories[ci].tags.push('');
+  renderSettings();
+}
+
+function removeObsTag(ci, ti) {
+  db.settings.obsCategories[ci].tags.splice(ti, 1);
+  renderSettings();
+}
+
+function saveSettings() {
+  saveDB();
+  flash('settingsSaved');
+}
+
+function saveObsSettings() {
+  saveDB();
+  flash('obsSettingsSaved');
+}
+
+function flash(id) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 2000);
+}
+
+function resetCases() {
+  if (!confirm('Удалить всех клиентов из базы? Отменить нельзя.')) return;
+  db.cases = [];
+  saveDB();
+  showPage('list');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ЭКСПОРТ / ИМПОРТ
+// ──────────────────────────────────────────────────────────────────────────────
+
+function exportDB() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'clients_' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importDB(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data.cases)) throw new Error('Неверный формат');
+      if (!confirm(`Загрузить ${data.cases.length} клиентов? Текущие данные будут заменены.`)) return;
+      db = data;
+      if (!db.settings.obsCategories) db.settings.obsCategories = OBS_CATEGORIES.map(c => ({ ...c, tags: [...c.tags] }));
+      saveDB();
+      showPage('list');
+    } catch(err) { alert('Ошибка: ' + err.message); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// УТИЛИТЫ
+// ──────────────────────────────────────────────────────────────────────────────
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ЗАПУСК
+loadDB();
+renderList('');
+</script>
+</body>
+</html>
